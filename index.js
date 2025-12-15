@@ -10,6 +10,8 @@ const { themeList, getCountImage } = require("./utils/themify");
 const { cors, ZodValid } = require("./utils/middleware");
 const { randomArray, logger } = require("./utils");
 
+const ALLOWED_USERNAME = process.env.ALLOWED_USERNAME || "aditsuru";
+
 const app = express();
 
 app.use(express.static("assets"));
@@ -49,6 +51,12 @@ app.get(["/@:name", "/get/@:name"],
   }),
   async (req, res) => {
     const { name } = req.params;
+
+    if (name !== ALLOWED_USERNAME) {
+      res.set("content-type", "text/plain");
+      return res.status(403).send(`This instance is private: @${ALLOWED_USERNAME}`);
+    }
+
     let { theme = "moebooru", num = 0, ...rest } = req.query;
 
     // This helps with GitHub's image cache
@@ -89,6 +97,10 @@ app.get(["/@:name", "/get/@:name"],
 // JSON record
 app.get("/record/@:name", async (req, res) => {
   const { name } = req.params;
+
+  if (name !== ALLOWED_USERNAME) {
+    return res.status(403).json({ error: `This instance is private: @${ALLOWED_USERNAME}` });
+  }
 
   const data = await getCountByName(name);
 
